@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-forest: #173f32;
+  --color-gold: #d9ad45;
+  --color-cream: #f7f1df;
+  --font-sans: var(--font-geist-sans);
+  --font-heading: var(--font-heading-custom);
+  --radius-sm: .5rem;
+  --radius-md: .75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+:root {
+  --background: #f8f5eb;
+  --foreground: #17352c;
+  --card: #ffffff;
+  --card-foreground: #17352c;
+  --popover: #ffffff;
+  --popover-foreground: #17352c;
+  --primary: #173f32;
+  --primary-foreground: #fffaf0;
+  --secondary: #e9e3d1;
+  --secondary-foreground: #173f32;
+  --muted: #eee9dc;
+  --muted-foreground: #63736c;
+  --accent: #e4c46f;
+  --accent-foreground: #173f32;
+  --destructive: #9e3f3f;
+  --border: #d7d6ca;
+  --input: #d7d6ca;
+  --ring: #b28a2f;
+  --font-heading-custom: ui-rounded, 'PingFang TC', 'Noto Sans TC', sans-serif;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; font-family: var(--font-geist-sans), 'PingFang TC', sans-serif; }
+  button { touch-action: manipulation; }
+}
+
+.stat-chip { @apply flex items-center gap-2 rounded-full border border-forest/15 bg-white px-4 py-2 text-xs font-semibold text-forest shadow-sm; }
+.map-panel { background: radial-gradient(circle at 75% 20%, rgba(217,173,69,.22), transparent 26%), linear-gradient(145deg, #eef0df, #dce7d7 55%, #c8d8cb); }
+.map-panel::after { content: ''; position: absolute; inset: 0; opacity: .32; pointer-events: none; background-image: radial-gradient(#173f32 1px, transparent 1px); background-size: 24px 24px; }
+.path-line { position: absolute; left: 10%; right: 10%; top: 45%; height: 6px; border-radius: 99px; background: repeating-linear-gradient(90deg, rgba(23,63,50,.25) 0 18px, transparent 18px 27px); transform: rotate(-2deg); }
+.stage { @apply min-w-0 rounded-2xl px-2 py-3 text-center text-forest transition-transform; }
+.stage:not(:disabled):hover { transform: translateY(-4px); }
+.stage-node { @apply mx-auto grid size-14 place-items-center rounded-full border-4 border-white bg-forest text-cream shadow-md; }
+.stage.active { @apply bg-white/75 shadow-sm; }
+.stage.active .stage-node { @apply size-16 bg-gold text-forest ring-4 ring-gold/25; }
+.stage.locked { @apply cursor-not-allowed opacity-45; }
+.stage.locked .stage-node { @apply bg-slate-500; }
+.field-select { @apply h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50; }
+.question-card { background-image: radial-gradient(circle at 100% 0, rgba(217,173,69,.13), transparent 32%); }
+
+input[type='checkbox'] { accent-color: #173f32; }
+
+@media (max-width: 820px) and (orientation: portrait) {
+  body::before { content: '請把 iPad 轉為橫向使用'; position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #173f32; color: #fffaf0; font-weight: 700; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
