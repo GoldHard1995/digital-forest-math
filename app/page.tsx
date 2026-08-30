@@ -58,6 +58,8 @@ export default function Home() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
+
   useEffect(() => {
     if (profile?.role === 'teacher' || profile?.role === 'admin') setView('teacher');
     if (profile?.role === 'student') setView('map');
@@ -68,7 +70,6 @@ export default function Home() {
   }, [canViewTeacher, view]);
 
   const goStudent = () => setView('map');
-  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
   const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
   const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
 
