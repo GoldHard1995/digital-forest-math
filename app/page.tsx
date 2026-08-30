@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import {
   Archive, ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp,
   Download, FileSpreadsheet, Gem, GraduationCap, Leaf, LockKeyhole, Map,
@@ -11,8 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { supabase } from '@/lib/supabase';
 
 type View = 'map' | 'question' | 'teacher' | 'assign' | 'report';
+type Profile = { full_name: string; role: 'admin' | 'teacher' | 'student'; character_name: string | null };
 
 const stages = [
   { title: '數線方向', subtitle: '已掌握', stars: 3, status: 'done' },
@@ -31,14 +34,46 @@ const students = [
 
 export default function Home() {
   const [view, setView] = useState<View>('map');
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(Boolean(supabase));
+  const [demoMode, setDemoMode] = useState(!supabase);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const loadProfile = async (userId: string) => {
+      const { data } = await supabase.from('profiles').select('full_name, role, character_name').eq('id', userId).maybeSingle();
+      setProfile(data as Profile | null);
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session) void loadProfile(data.session.user.id);
+      setLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setProfile(null);
+      if (nextSession) void loadProfile(nextSession.user.id);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (profile?.role === 'teacher' || profile?.role === 'admin') setView('teacher');
+    if (profile?.role === 'student') setView('map');
+  }, [profile?.role]);
 
   const goStudent = () => setView('map');
   const goTeacher = () => setView('teacher');
+  const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
+
+  if (loading) return <main className="grid min-h-screen place-items-center bg-background text-forest"><p className="text-sm">正在連接學習帳戶……</p></main>;
+  if (supabase && !session && !demoMode) return <SignInScreen onDemo={() => setDemoMode(true)} />;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} />
-      {view === 'map' && <StudentMap onStart={() => setView('question')} />}
+      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} onSignOut={signOut} />
+      {view === 'map' && <StudentMap onStart={() => setView('question')} profile={profile} demoMode={demoMode} />}
       {view === 'question' && <QuestionScreen onBack={goStudent} />}
       {view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
       {view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
@@ -47,7 +82,23 @@ export default function Home() {
   );
 }
 
-function Header({ view, goStudent, goTeacher }: { view: View; goStudent: () => void; goTeacher: () => void }) {
+function SignInScreen({ onDemo }: { onDemo: () => void }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!supabase) return;
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setMessage(error ? '登入資料不正確，請向老師核對帳戶。' : '登入成功，正在開啟學習地圖……');
+    setSubmitting(false);
+  };
+  return <main className="grid min-h-screen place-items-center bg-cream p-6"><form onSubmit={submit} className="w-full max-w-md rounded-[28px] border border-forest/15 bg-white p-8 shadow-sm"><div className="mb-6 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-2xl bg-forest text-gold"><Leaf className="size-6" /></div><div><h1 className="font-heading text-2xl font-bold text-forest">數字森林</h1><p className="text-xs text-muted-foreground">學生及教師登入</p></div></div><label className="mb-4 block text-sm font-bold">帳戶電郵<Input className="mt-2" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label className="block text-sm font-bold">密碼<Input className="mt-2" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><Button className="mt-6 w-full" disabled={submitting}>{submitting ? '正在登入……' : '登入平台'}</Button>{message && <p className="mt-4 rounded-xl bg-gold/10 p-3 text-sm text-forest">{message}</p>}<button type="button" onClick={onDemo} className="mt-5 w-full text-sm text-forest underline">先查看示範關卡</button></form></main>;
+}
+
+function Header({ view, goStudent, goTeacher, profile, demoMode, onSignOut }: { view: View; goStudent: () => void; goTeacher: () => void; profile: Profile | null; demoMode: boolean; onSignOut: () => void }) {
   const teacherView = ['teacher', 'assign', 'report'].includes(view);
   return (
     <header className="border-b border-forest/15 bg-cream/95 px-6 py-3 shadow-sm">
@@ -56,20 +107,24 @@ function Header({ view, goStudent, goTeacher }: { view: View; goStudent: () => v
           <div className="grid size-11 place-items-center rounded-2xl bg-forest text-gold shadow-sm"><Leaf className="size-6" /></div>
           <div><h1 className="font-heading text-xl font-bold tracking-wide text-forest">數字森林</h1><p className="text-xs text-muted-foreground">中學數學冒險平台 · 低擬真原型</p></div>
         </button>
-        <nav aria-label="原型角色切換" className="flex rounded-xl border border-forest/15 bg-white p-1">
+        <nav aria-label="帳戶與角色切換" className="flex items-center gap-2">
+          {demoMode ? <Badge variant="secondary">示範模式</Badge> : profile && <span className="hidden text-right text-xs text-muted-foreground md:block">{profile.full_name}<br />{profile.role === 'student' ? '學生帳戶' : '教師帳戶'}</span>}
+          <div className="flex rounded-xl border border-forest/15 bg-white p-1">
           <Button size="sm" variant={!teacherView ? 'default' : 'ghost'} onClick={goStudent}>學生畫面</Button>
           <Button size="sm" variant={teacherView ? 'default' : 'ghost'} onClick={goTeacher}>教師畫面</Button>
+          </div>
+          {!demoMode && <Button size="sm" variant="ghost" onClick={onSignOut}>登出</Button>}
         </nav>
       </div>
     </header>
   );
 }
 
-function StudentMap({ onStart }: { onStart: () => void }) {
+function StudentMap({ onStart, profile, demoMode }: { onStart: () => void; profile: Profile | null; demoMode: boolean }) {
   return (
     <section className="mx-auto max-w-[1180px] px-6 py-7">
       <div className="mb-6 flex items-end justify-between gap-5">
-        <div><Badge variant="secondary" className="mb-2">學生原型 · S1A 陳同學</Badge><h2 className="font-heading text-3xl font-bold text-forest">負數迷霧正在擴散</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">完成「同號加法」，恢復森林的數字能量。這是你今天的最新指派。</p></div>
+        <div><Badge variant="secondary" className="mb-2">{demoMode ? '示範關卡 · S1A 陳同學' : `${profile?.character_name || profile?.full_name || '魔法學徒'} · 學習地圖`}</Badge><h2 className="font-heading text-3xl font-bold text-forest">負數迷霧正在擴散</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">完成「同號加法」，恢復森林的數字能量。這是你今天的最新指派。</p></div>
         <div className="hidden items-center gap-3 md:flex"><div className="stat-chip"><Star className="size-4" /> 5 顆星</div><div className="stat-chip"><Gem className="size-4" /> 2 件收藏</div></div>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_270px]">
