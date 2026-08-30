@@ -64,7 +64,8 @@ export default function Home() {
   }, [profile?.role]);
 
   const goStudent = () => setView('map');
-  const goTeacher = () => setView('teacher');
+  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin';
+  const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
   const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-background text-forest"><p className="text-sm">正在連接學習帳戶……</p></main>;
@@ -72,12 +73,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} onSignOut={signOut} />
+      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} canViewTeacher={canViewTeacher} onSignOut={signOut} />
       {view === 'map' && <StudentMap onStart={() => setView('question')} profile={profile} demoMode={demoMode} />}
       {view === 'question' && <QuestionScreen onBack={goStudent} />}
-      {view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
-      {view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
-      {view === 'report' && <ReportScreen onBack={goTeacher} />}
+      {canViewTeacher && view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
+      {canViewTeacher && view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
+      {canViewTeacher && view === 'report' && <ReportScreen onBack={goTeacher} />}
     </main>
   );
 }
@@ -100,7 +101,7 @@ function SignInScreen({ onDemo }: { onDemo: () => void }) {
   return <main className="grid min-h-screen place-items-center bg-cream p-6"><form onSubmit={submit} className="w-full max-w-md rounded-[28px] border border-forest/15 bg-white p-8 shadow-sm"><div className="mb-6 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-2xl bg-forest text-gold"><Leaf className="size-6" /></div><div><h1 className="font-heading text-2xl font-bold text-forest">數字森林</h1><p className="text-xs text-muted-foreground">學生及教師登入</p></div></div><label className="mb-4 block text-sm font-bold">登入名稱／電郵<Input className="mt-2" type="text" autoComplete="username" placeholder="學生輸入 8 位登入名稱；教師輸入電郵" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label className="block text-sm font-bold">密碼<Input className="mt-2" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" className="mt-6 w-full rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50" disabled={submitting}>{submitting ? '正在登入……' : '登入平台'}</button>{message && <p className="mt-4 rounded-xl bg-gold/10 p-3 text-sm text-forest">{message}</p>}<button type="button" onClick={onDemo} className="mt-5 w-full text-sm text-forest underline">先查看示範關卡</button></form></main>;
 }
 
-function Header({ view, goStudent, goTeacher, profile, demoMode, onSignOut }: { view: View; goStudent: () => void; goTeacher: () => void; profile: Profile | null; demoMode: boolean; onSignOut: () => void }) {
+function Header({ view, goStudent, goTeacher, profile, demoMode, canViewTeacher, onSignOut }: { view: View; goStudent: () => void; goTeacher: () => void; profile: Profile | null; demoMode: boolean; canViewTeacher: boolean; onSignOut: () => void }) {
   const teacherView = ['teacher', 'assign', 'report'].includes(view);
   return (
     <header className="border-b border-forest/15 bg-cream/95 px-6 py-3 shadow-sm">
@@ -113,7 +114,7 @@ function Header({ view, goStudent, goTeacher, profile, demoMode, onSignOut }: { 
           {demoMode ? <Badge variant="secondary">示範模式</Badge> : profile && <span className="hidden text-right text-xs text-muted-foreground md:block">{profile.full_name}<br />{profile.role === 'student' ? '學生帳戶' : '教師帳戶'}</span>}
           <div className="flex rounded-xl border border-forest/15 bg-white p-1">
           <Button size="sm" variant={!teacherView ? 'default' : 'ghost'} onClick={goStudent}>學生畫面</Button>
-          <Button size="sm" variant={teacherView ? 'default' : 'ghost'} onClick={goTeacher}>教師畫面</Button>
+          {canViewTeacher && <Button size="sm" variant={teacherView ? 'default' : 'ghost'} onClick={goTeacher}>教師畫面</Button>}
           </div>
           {!demoMode && <Button size="sm" variant="ghost" onClick={onSignOut}>登出</Button>}
         </nav>
