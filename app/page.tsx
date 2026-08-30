@@ -64,7 +64,7 @@ export default function Home() {
   }, [profile?.role]);
 
   const goStudent = () => setView('map');
-  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin';
+  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
   const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
   const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
 
