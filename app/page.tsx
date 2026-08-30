@@ -63,6 +63,10 @@ export default function Home() {
     if (profile?.role === 'student') setView('map');
   }, [profile?.role]);
 
+  useEffect(() => {
+    if (!canViewTeacher && ['teacher', 'assign', 'report'].includes(view)) setView('map');
+  }, [canViewTeacher, view]);
+
   const goStudent = () => setView('map');
   const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
   const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
