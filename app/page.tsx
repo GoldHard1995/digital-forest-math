@@ -175,13 +175,17 @@ function normalizeNumericAnswer(value: string) {
   return value.trim().replace(/\s+/g, '').replaceAll('−', '-').replaceAll('＋', '+').replace(/^\+/, '');
 }
 
-function NumberLine({ config }: { config: NumberLineConfig }) {
+function NumberLine({ config, answer }: { config: NumberLineConfig; answer: string }) {
   const xFor = (value: number) => 64 + ((value + 8) * 1232) / 16;
-  return <div className="mt-6 rounded-2xl border border-forest/10 bg-cream/45 px-3 py-2"><svg viewBox="0 0 1360 180" className="h-auto w-full" role="img" aria-label="由 −8 到 ＋8 的數線"><image href="/number-line-8.svg" x="0" y="0" width="1360" height="180" aria-hidden="true" />
+  const answerValue = Number(normalizeNumericAnswer(answer));
+  const hidesAnswer = Number.isFinite(answerValue);
+  const visiblePoints = hidesAnswer ? config.points.filter((point) => point.value !== answerValue) : config.points;
+  const visibleArrows = hidesAnswer ? config.arrows?.filter((arrow) => arrow.from !== answerValue && arrow.to !== answerValue) : config.arrows;
+  return <div className="mt-6 rounded-2xl border border-forest/10 bg-cream/45 px-3 py-2"><svg viewBox="0 0 1360 180" className="h-auto w-full" role="img" aria-label="由 −8 到 ＋8 的數線刻度"><image href="/number-line-8.svg" x="0" y="0" width="1360" height="180" aria-hidden="true" />
     <defs><marker id="number-line-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d9ad45" /></marker></defs>
-    {config.connectPoints && config.points.length > 1 && <line x1={xFor(config.points[0].value)} y1="56" x2={xFor(config.points[config.points.length - 1].value)} y2="56" stroke="#d9ad45" strokeWidth="3" strokeDasharray="8 7" />}
-    {config.arrows?.map((arrow, index) => <line key={`${arrow.from}-${arrow.to}-${index}`} x1={xFor(arrow.from)} y1="56" x2={xFor(arrow.to)} y2="56" stroke="#d9ad45" strokeWidth="4" markerEnd="url(#number-line-arrow)" />)}
-    {config.points.map((point) => <g key={`${point.value}-${point.label}`}><circle cx={xFor(point.value)} cy="78" r="8" fill="#d9ad45" stroke="#173f32" strokeWidth="3" /><text x={xFor(point.value)} y="30" textAnchor="middle" fill="#173f32" fontSize="23" fontWeight="700">{point.label}</text></g>)}
+    {config.connectPoints && visiblePoints.length === config.points.length && visiblePoints.length > 1 && <line x1={xFor(visiblePoints[0].value)} y1="56" x2={xFor(visiblePoints[visiblePoints.length - 1].value)} y2="56" stroke="#d9ad45" strokeWidth="3" strokeDasharray="8 7" />}
+    {visibleArrows?.map((arrow, index) => <line key={`${arrow.from}-${arrow.to}-${index}`} x1={xFor(arrow.from)} y1="56" x2={xFor(arrow.to)} y2="56" stroke="#d9ad45" strokeWidth="4" markerEnd="url(#number-line-arrow)" />)}
+    {visiblePoints.map((point) => <g key={`${point.value}-${point.label}`}><circle cx={xFor(point.value)} cy="78" r="8" fill="#d9ad45" stroke="#173f32" strokeWidth="3" /><text x={xFor(point.value)} y="30" textAnchor="middle" fill="#173f32" fontSize="23" fontWeight="700">{point.label}</text></g>)}
   </svg></div>;
 }
 
@@ -226,10 +230,10 @@ function QuestionScreen({ onBack }: { onBack: () => void }) {
       <div className="mb-5 flex items-center justify-between gap-3"><Badge variant="secondary">{question.section}</Badge><span className="text-right text-xs text-muted-foreground">難度 {question.difficulty} · 首次答對可保留 3 星</span></div>
       <p className="text-center text-sm font-semibold text-forest/65">{contextQuestion ? '以有向數表示以下情境。' : '請根據數線及題意作答。'}</p>
       <p className="my-7 text-center text-2xl font-semibold leading-relaxed tracking-wide text-forest sm:text-3xl">{question.prompt}</p>
-      {question.numberLine && <NumberLine config={question.numberLine} />}
+      {question.numberLine && <NumberLine config={question.numberLine} answer={question.answer} />}
       {question.inputLabel && <p className="mt-5 rounded-xl bg-forest/6 px-4 py-3 text-center text-xs text-forest/80">{question.inputLabel}</p>}
       <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="answer" inputMode="numeric" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
-      <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-7" aria-label="數學鍵盤">{['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '−', '＋'].map((key) => <Button key={key} type="button" variant="outline" className="h-11 text-lg" onClick={() => setAnswer((value) => value + key)}>{key}</Button>)}<Button type="button" variant="outline" className="col-span-2 h-11 text-sm sm:col-span-1" onClick={() => setAnswer('')}>清除</Button></div>
+      <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-7" aria-label="數學鍵盤">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '−', '＋'].map((key) => <Button key={key} type="button" variant="outline" className="h-11 text-lg" onClick={() => setAnswer((value) => value + key)}>{key}</Button>)}<Button type="button" variant="outline" className="col-span-2 h-11 text-sm sm:col-span-1" onClick={() => setAnswer('')}>清除</Button></div>
       {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成並返回地圖</Button>}</div></div></div>}
       <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、6 題核心練習及 3 題綜合或挑戰。</p>
     </div>
@@ -387,8 +391,8 @@ function appendNumericKey(value: string, key: string, allowDecimal: boolean) {
 
 function NumericKeypad({ allowDecimal, onKey }: { allowDecimal: boolean; onKey: (key: string) => void }) {
   const keys = allowDecimal
-    ? ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '.', '−', '＋']
-    : ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '−', '＋'];
+    ? ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '−', '＋']
+    : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '−', '＋'];
   return <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-7" aria-label="數學鍵盤">
     {keys.map((key) => <Button key={key} type="button" variant="outline" className="h-11 text-lg" onClick={() => onKey(key)}>{key}</Button>)}
     <Button type="button" variant="outline" className="col-span-2 h-11 text-sm sm:col-span-1" onClick={() => onKey('⌫')}>刪除</Button>
