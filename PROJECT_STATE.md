@@ -1,0 +1,151 @@
+# 數字森林：目前項目狀態
+
+最後更新：2026-08-30
+
+## 狀態摘要
+
+- Repository：`GoldHard1995/digital-forest-math`
+- 本機分支：`main`
+- 正式網址：<https://digital-forest-math.pages.dev/>
+- 前端：`React 19`、`TypeScript`、`Vite`、`Tailwind CSS`
+- 後端：`Supabase Auth` 及 `Postgres`
+- 部署：`GitHub main` → `Cloudflare Pages`
+- 現階段：已建立可登入的低擬真原型；第一關 `13` 題內容已由教師核准並完成內容 QA，但全部仍在本機工作樹內，尚未提交或發布；正式作答資料及教師報表仍未接駁。
+
+## 最終目標
+
+建立一個供香港中一基礎較弱學生使用的繁體中文數學小遊戲平台。學生透過短關卡及地圖解鎖鞏固有向數，系統保存每次作答、提示、錯誤類型、補救及成長紀錄；教師可安全地管理班級、指派活動、查看個別錯誤及比較平行前後測。
+
+長期階段及驗收門檻見 [`PLAN.md`](PLAN.md)。
+
+## 已完成項目
+
+### 部署及基礎架構
+
+- 已建立 `GitHub` repository 及 `Cloudflare Pages` 正式網址。
+- `npm run build` 使用 `vite.static.config.ts`，輸出至 `dist/client`，已通過本機建置。
+- 已提供 `.env.example`，前端只讀取 `VITE_SUPABASE_URL` 及 `VITE_SUPABASE_ANON_KEY`。
+
+### 登入及角色分流
+
+- `lib/supabase.ts` 已建立瀏覽器端 `Supabase` client。
+- `app/page.tsx` 已接駁密碼登入、登出、session 監聽及 `profiles` 角色資料。
+- 學生的非電郵登入名稱會轉換為內部電郵別名；教師仍以電郵登入。
+- `student` 角色不顯示教師入口，亦會被畫面守衛帶回學生地圖。
+- `teacher`、`admin` 及指定教師帳戶可以進入教師原型畫面。
+- `Supabase` 內曾以人工流程建立學生、教師及測試帳戶；其現況、數目及 `RLS` 必須在下一次後端工作開始前重新核對，版本庫沒有可重建的遷移紀錄。
+
+### 第一關「數線方向」
+
+- 已建立 `4` 題基礎回想及 `6` 題核心練習，共 `10` 題。
+- Q2 已由 `−9` 改為 `−7`。
+- 基礎回想及核心練習的數線題使用 `−8` 至 `＋8` 數線。
+- 核心練習 C4–C6 為溫度、獲利及方向情境題，按教師指示不顯示數線。
+- 已建立平台內數字鍵盤、答案格式統一、答題進度及三次錯誤的逐層回饋畫面。
+- 已建立並檢視 `SVG` 數線；另保留 `PNG`、`PDF` 審閱檔及產生腳本。
+- 已在 `1024 × 768` 橫屏版面檢查主要答題畫面。
+
+## 目前未提交改動
+
+以下是截至本文件更新時的實際工作樹，必須保留並在提交前再次審閱：
+
+- 已修改：`app/page.tsx`
+- 新增：`lib/first-stage-content.ts`
+- 新增：`public/number-line-8.svg`
+- 新增：`public/number-line-8.png`
+- 新增：`public/number-line-8.pdf`
+- 新增：`scripts/draw_number_line.py`
+- 新增：本次交接文件 `PLAN.md`、`PROJECT_STATE.md` 及 `docs/`
+
+這些第一關改動目前只存在於本機，尚未推送至 `GitHub`，亦未部署至正式網址。
+
+## 尚未完成項目
+
+### 第一關
+
+- `lib/first-stage-content.ts` 已有 `NF-H01`–`NF-H03` 共 `3` 題只考方向、位置及距離的綜合或挑戰題，已獲教師核准為難度 `3`。
+- 內容 QA 已完成：題目編號 `13` 個且不重複，分段為 `4 / 6 / 3`，每題均有答案、顯示答案及解法。
+- 現有提示流程尚未在第三次錯誤後自動產生同技能、不同數值的補救題。
+- 完成 `10` 題後只返回地圖，尚未保存星級、掌握或更新地圖進度。
+- 作答、首次正確、提示、完整解法及錯誤類型尚未寫入 `Supabase`。
+
+### 內容及遊戲
+
+- 第一區其餘七項技能尚未建立正式題目及學習流程。
+- 小頭目、大頭目、收藏、徽章、內容解鎖及能力軌跡尚未完成。
+- 題目版本、發布、封存及歷史作答保留尚未實作。
+
+### 後端及教師功能
+
+- 資料庫 schema、migration、seed 及 `RLS` 測試未納入 repository，現時不能由程式碼重建後端。
+- 教師總覽、學生報表、指派活動及匯出按鈕仍使用 `app/page.tsx` 的硬編碼示範資料。
+- 班級建立、`Excel` 匯入、登入資料產生、重設密碼及封存流程尚未接駁。
+- 前後測、重玩紀錄、錯誤診斷信心及正式成效報告尚未完成。
+- 單一有效作答工作階段、斷線同步及重複提交保護尚未完成。
+
+### 營運及品質
+
+- 尚未完成 `70` 人同時在線測試、`iPadOS 15 Safari` 全流程測試及無障礙檢查。
+- 備份、容量警告、錯誤監察、維護畫面及資料刪除流程尚未完成。
+- `README.md` 仍表示 `Supabase` 未連接，已落後於實際程式碼，需要稍後修正。
+- 2026-08-30 重新驗證：`npm run lint`、`npm run build` 及 `git diff --check` 均通過；先前記錄的 `GraduationCap` 未使用警告已不存在。
+
+## 目前架構及重要檔案
+
+- [`app/page.tsx`](app/page.tsx)：目前大部分登入、學生地圖、答題及教師原型畫面；仍是單檔低擬真結構。
+- [`lib/first-stage-content.ts`](lib/first-stage-content.ts)：第一關已核准的 `10` 題內容及數線設定。
+- [`lib/supabase.ts`](lib/supabase.ts)：瀏覽器端 `Supabase` client。
+- [`vite.static.config.ts`](vite.static.config.ts)：`Cloudflare Pages` 正式靜態建置設定。
+- [`vite.config.ts`](vite.config.ts)：`Vinext`／Sites 設定，不是目前 `Cloudflare Pages` 靜態建置入口。
+- [`scripts/draw_number_line.py`](scripts/draw_number_line.py)：重建數線審閱及網站資源。
+- [`docs/architecture.md`](docs/architecture.md)：架構、資料流、環境變數及建置方式。
+- [`docs/decisions.md`](docs/decisions.md)：已作出的技術及教學實作決定。
+- [`docs/requirements.md`](docs/requirements.md)：目前產品要求及驗收條件。
+
+## 已作出的技術決定及原因
+
+- 使用 `Cloudflare Pages` 靜態建置：符合免費試用及目前前端需求，亦避開 `Vinext` 設定依賴 `.openai/hosting.json` 導致的建置問題。
+- 使用 `Supabase`：以同一免費後端提供身份驗證、`Postgres` 及 `RLS`。
+- 學生登入名稱在前端轉為內部電郵別名：保留學生使用數字帳號的體驗，同時沿用 `Supabase` 電郵密碼驗證。
+- 題目先放在本機內容檔：第一版需教師逐題核實，核准及版本化流程未完成前不直接把生成題發布至正式題庫。
+- 數線以 `SVG` 顯示：在舊 `iPad` 保持清晰並減少點陣圖放大失真。
+
+完整決定及限制見 [`docs/decisions.md`](docs/decisions.md)。
+
+## 已知問題／Bug
+
+- 教師畫面的學生、進度、正確率及錯誤類型是示範資料，不代表 `Supabase` 現況。
+- `demoMode` 會顯示教師畫面，只適合本機原型；正式部署前應評估關閉或只在開發環境開啟。
+- 學生畫面的進度、星級及掌握狀態未保存，重新登入後不能延續。
+- 第三次錯誤後尚未出現正式補救題，與產品需求不完整一致。
+- 前端角色守衛不是資料安全邊界；若 `RLS` 不完整，仍有資料洩漏風險。
+- repository 沒有後端 migration，因此人工建立的資料表、帳戶及政策可能與程式碼漂移。
+- `README.md` 的後端狀態已過時。
+- 本機 `vinext dev` 在受限制執行環境可能因 inspector port 權限失敗；靜態 `Vite` 建置及預覽可用。
+
+## 下一步應該做甚麼
+
+1. 教師已核准第一關 `13` 題；內容 QA、`npm run build` 及 `npm run lint` 已通過，待進行橫屏試玩及最終差異審閱。
+2. 經教師同意後，提交目前本機第一關改動，推送至 `GitHub` 並核對 `Cloudflare Pages` 正式部署。
+3. 經教師同意後，提交目前本機第一關改動，推送至 `GitHub` 並核對 `Cloudflare Pages` 正式部署。
+4. 把 `Supabase` schema、migration、seed 及 `RLS` 政策納入 repository；先以無個人資料的測試資料驗證。
+5. 以正式資料保存題目版本、活動、作答、提示、補救、星級及進度，移除相關硬編碼狀態。
+6. 使用學生測試帳戶完成角色隔離及完整答題流程測試，再開始教師報表接駁。
+7. 每完成一個重要階段，立即更新本文件的日期、已完成、未完成、問題及下一步。
+
+## 哪些地方不要改動
+
+- 不要重設、丟棄或覆蓋上述未提交改動；先檢查 `git status` 及實際 diff。
+- 不要把真實學生資料、教師資料、密碼、匯入檔案、service role key 或其他秘密提交至 `Git` 或寫入本文件。
+- 不要在瀏覽器端使用 `Supabase service_role`；資料權限必須由 `RLS` 保護。
+- 不要把教師原型的硬編碼數據描述為正式報告。
+- 不要改回會讓學生看見教師畫面的角色邏輯。
+- 不要修改已核准的第一關 `10` 題、Q2 的 `−7`、C4–C6 不設數線等教學決定，除非教師明確要求。
+- 首版不要加入分數、小數、未知數填空、自由換裝、音效、語音或朗讀。
+- 不要把 `Cloudflare Pages` 正式建置改為 `vite.config.ts`；目前應使用 `npm run build` 及輸出 `dist/client`。
+- 不要直接覆寫已產生作答紀錄的題目；使用新版本並保留歷史。
+- 不要因文件描述而忽略程式碼；文件與 repository 不一致時，以可重現的實際狀態為準並修正文件。
+
+## 新工作階段的操作規則
+
+開始前閱讀 `PLAN.md` 及本文件，再檢查 `git status`、近期提交、環境設定及實際程式碼。不要重新製作已完成的功能。每完成一個重要階段後更新本文件，而 `PLAN.md` 只在長期方向改變時更新。

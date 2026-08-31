@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   Archive, ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp,
-  Download, FileSpreadsheet, Gem, GraduationCap, Leaf, LockKeyhole, Map,
+  Download, FileSpreadsheet, Gem, Leaf, LockKeyhole, Map,
   Plus, RotateCcw, Search, ShieldCheck, Sparkles, Star, Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,15 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/lib/supabase';
+import { firstStageQuestions, type FirstStageQuestion, type NumberLineConfig } from '@/lib/first-stage-content';
 
 type View = 'map' | 'question' | 'teacher' | 'assign' | 'report';
 type Profile = { full_name: string; role: 'admin' | 'teacher' | 'student'; character_name: string | null };
 
 const stages = [
-  { title: '數線方向', subtitle: '已掌握', stars: 3, status: 'done' },
-  { title: '比較大小', subtitle: '已掌握', stars: 2, status: 'done' },
-  { title: '同號加法', subtitle: '教師最新指派', stars: 0, status: 'active' },
+  { title: '數線方向', subtitle: '教師最新指派', stars: 0, status: 'active' },
+  { title: '比較大小', subtitle: '尚未解鎖', stars: 0, status: 'locked' },
+  { title: '同號加法', subtitle: '尚未解鎖', stars: 0, status: 'locked' },
   { title: '異號加法', subtitle: '尚未解鎖', stars: 0, status: 'locked' },
   { title: '聚能獸', subtitle: '加法小頭目', stars: 0, status: 'locked' },
 ];
@@ -38,6 +39,8 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(Boolean(supabase));
   const [demoMode, setDemoMode] = useState(!supabase);
+
+  const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
 
   useEffect(() => {
     if (!supabase) return;
@@ -63,8 +66,12 @@ export default function Home() {
     if (profile?.role === 'student') setView('map');
   }, [profile?.role]);
 
+  useEffect(() => {
+    if (!canViewTeacher && ['teacher', 'assign', 'report'].includes(view)) setView('map');
+  }, [canViewTeacher, view]);
+
   const goStudent = () => setView('map');
-  const goTeacher = () => setView('teacher');
+  const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
   const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-background text-forest"><p className="text-sm">正在連接學習帳戶……</p></main>;
@@ -72,12 +79,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} onSignOut={signOut} />
+      <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} canViewTeacher={canViewTeacher} onSignOut={signOut} />
       {view === 'map' && <StudentMap onStart={() => setView('question')} profile={profile} demoMode={demoMode} />}
       {view === 'question' && <QuestionScreen onBack={goStudent} />}
-      {view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
-      {view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
-      {view === 'report' && <ReportScreen onBack={goTeacher} />}
+      {canViewTeacher && view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
+      {canViewTeacher && view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
+      {canViewTeacher && view === 'report' && <ReportScreen onBack={goTeacher} />}
     </main>
   );
 }
@@ -100,7 +107,7 @@ function SignInScreen({ onDemo }: { onDemo: () => void }) {
   return <main className="grid min-h-screen place-items-center bg-cream p-6"><form onSubmit={submit} className="w-full max-w-md rounded-[28px] border border-forest/15 bg-white p-8 shadow-sm"><div className="mb-6 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-2xl bg-forest text-gold"><Leaf className="size-6" /></div><div><h1 className="font-heading text-2xl font-bold text-forest">數字森林</h1><p className="text-xs text-muted-foreground">學生及教師登入</p></div></div><label className="mb-4 block text-sm font-bold">登入名稱／電郵<Input className="mt-2" type="text" autoComplete="username" placeholder="學生輸入 8 位登入名稱；教師輸入電郵" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label className="block text-sm font-bold">密碼<Input className="mt-2" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" className="mt-6 w-full rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50" disabled={submitting}>{submitting ? '正在登入……' : '登入平台'}</button>{message && <p className="mt-4 rounded-xl bg-gold/10 p-3 text-sm text-forest">{message}</p>}<button type="button" onClick={onDemo} className="mt-5 w-full text-sm text-forest underline">先查看示範關卡</button></form></main>;
 }
 
-function Header({ view, goStudent, goTeacher, profile, demoMode, onSignOut }: { view: View; goStudent: () => void; goTeacher: () => void; profile: Profile | null; demoMode: boolean; onSignOut: () => void }) {
+function Header({ view, goStudent, goTeacher, profile, demoMode, canViewTeacher, onSignOut }: { view: View; goStudent: () => void; goTeacher: () => void; profile: Profile | null; demoMode: boolean; canViewTeacher: boolean; onSignOut: () => void }) {
   const teacherView = ['teacher', 'assign', 'report'].includes(view);
   return (
     <header className="border-b border-forest/15 bg-cream/95 px-6 py-3 shadow-sm">
@@ -113,7 +120,7 @@ function Header({ view, goStudent, goTeacher, profile, demoMode, onSignOut }: { 
           {demoMode ? <Badge variant="secondary">示範模式</Badge> : profile && <span className="hidden text-right text-xs text-muted-foreground md:block">{profile.full_name}<br />{profile.role === 'student' ? '學生帳戶' : '教師帳戶'}</span>}
           <div className="flex rounded-xl border border-forest/15 bg-white p-1">
           <Button size="sm" variant={!teacherView ? 'default' : 'ghost'} onClick={goStudent}>學生畫面</Button>
-          <Button size="sm" variant={teacherView ? 'default' : 'ghost'} onClick={goTeacher}>教師畫面</Button>
+          {canViewTeacher && <Button size="sm" variant={teacherView ? 'default' : 'ghost'} onClick={goTeacher}>教師畫面</Button>}
           </div>
           {!demoMode && <Button size="sm" variant="ghost" onClick={onSignOut}>登出</Button>}
         </nav>
@@ -126,12 +133,12 @@ function StudentMap({ onStart, profile, demoMode }: { onStart: () => void; profi
   return (
     <section className="mx-auto max-w-[1180px] px-6 py-7">
       <div className="mb-6 flex items-end justify-between gap-5">
-        <div><Badge variant="secondary" className="mb-2">{demoMode ? '示範關卡 · S1A 陳同學' : `${profile?.character_name || profile?.full_name || '魔法學徒'} · 學習地圖`}</Badge><h2 className="font-heading text-3xl font-bold text-forest">負數迷霧正在擴散</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">完成「同號加法」，恢復森林的數字能量。這是你今天的最新指派。</p></div>
+        <div><Badge variant="secondary" className="mb-2">{demoMode ? '示範關卡 · S1A 陳同學' : `${profile?.character_name || profile?.full_name || '魔法學徒'} · 學習地圖`}</Badge><h2 className="font-heading text-3xl font-bold text-forest">負數迷霧正在擴散</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">先掌握「數線方向」，為森林找回正負能量。這是你今天的最新指派。</p></div>
         <div className="hidden items-center gap-3 md:flex"><div className="stat-chip"><Star className="size-4" /> 5 顆星</div><div className="stat-chip"><Gem className="size-4" /> 2 件收藏</div></div>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_270px]">
         <section aria-label="森林地圖" className="map-panel relative min-h-[470px] overflow-hidden rounded-[28px] border border-forest/15 p-6 shadow-sm">
-          <div className="mb-7 flex items-center justify-between"><div className="flex items-center gap-2 text-sm font-semibold text-forest"><Map className="size-4" /> 第一區：迷霧森林</div><span className="text-xs text-forest/70">進度 2／8</span></div>
+          <div className="mb-7 flex items-center justify-between"><div className="flex items-center gap-2 text-sm font-semibold text-forest"><Map className="size-4" /> 第一區：迷霧森林</div><span className="text-xs text-forest/70">進度 0／8</span></div>
           <div className="path-line" aria-hidden="true" />
           <div className="relative z-10 grid grid-cols-5 gap-3 pt-14">
             {stages.map((stage, index) => (
@@ -139,14 +146,14 @@ function StudentMap({ onStart, profile, demoMode }: { onStart: () => void; profi
                 <span className="stage-node">{stage.status === 'locked' ? <LockKeyhole className="size-5" /> : stage.status === 'active' ? <Sparkles className="size-6" /> : <ShieldCheck className="size-5" />}</span>
                 <span className="mt-3 block text-sm font-bold">{stage.title}</span><span className="mt-1 block text-[11px] opacity-70">{stage.subtitle}</span>
                 {stage.stars > 0 && <span className="mt-2 flex justify-center gap-0.5 text-gold">{Array.from({ length: 3 }).map((_, star) => <Star key={star} className={`size-3 ${star < stage.stars ? 'fill-current' : 'opacity-25'}`} />)}</span>}
-                {index === 2 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">繼續</span>}
+                {index === 0 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">開始</span>}
               </button>
             ))}
           </div>
           <div className="absolute bottom-5 left-6 rounded-xl border border-forest/10 bg-cream/90 px-4 py-3 text-xs text-forest shadow-sm"><span className="font-bold">故事提示：</span> 聚能獸正在擾亂同號能量。</div>
         </section>
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-gold/40 bg-gold/10 p-5"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-gold text-forest"><BookOpen className="size-5" /></div><p className="text-xs font-semibold text-forest/65">教師最新指派</p><h3 className="mt-1 font-heading text-lg font-bold text-forest">同號加法</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">13 題 · 約 10 分鐘<br />截止：9 月 3 日</p><Button className="mt-4 w-full justify-between" onClick={onStart}>開始關卡 <ChevronRight className="size-4" /></Button></div>
+          <div className="rounded-2xl border border-gold/40 bg-gold/10 p-5"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-gold text-forest"><BookOpen className="size-5" /></div><p className="text-xs font-semibold text-forest/65">教師最新指派</p><h3 className="mt-1 font-heading text-lg font-bold text-forest">數線方向</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">13 題<br />約 10 分鐘</p><Button className="mt-4 w-full justify-between" onClick={onStart}>開始關卡 <ChevronRight className="size-4" /></Button></div>
           <div className="rounded-2xl border border-forest/12 bg-white p-5"><p className="text-xs font-semibold text-forest/65">下個收藏</p><div className="mt-3 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-full border-2 border-dashed border-forest/20 text-forest/40"><Gem className="size-5" /></div><div><p className="text-sm font-bold">苔光法器</p><p className="text-xs text-muted-foreground">再取得 2 顆星</p></div></div></div>
         </aside>
       </div>
@@ -154,28 +161,69 @@ function StudentMap({ onStart, profile, demoMode }: { onStart: () => void; profi
   );
 }
 
+function normalizeNumericAnswer(value: string) {
+  return value.trim().replace(/\s+/g, '').replaceAll('−', '-').replaceAll('＋', '+').replace(/^\+/, '');
+}
+
+function NumberLine({ config }: { config: NumberLineConfig }) {
+  const xFor = (value: number) => 64 + ((value + 8) * 1232) / 16;
+  return <div className="mt-6 rounded-2xl border border-forest/10 bg-cream/45 px-3 py-2"><svg viewBox="0 0 1360 180" className="h-auto w-full" role="img" aria-label="由 −8 到 ＋8 的數線"><image href="/number-line-8.svg" x="0" y="0" width="1360" height="180" aria-hidden="true" />
+    <defs><marker id="number-line-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d9ad45" /></marker></defs>
+    {config.connectPoints && config.points.length > 1 && <line x1={xFor(config.points[0].value)} y1="56" x2={xFor(config.points[config.points.length - 1].value)} y2="56" stroke="#d9ad45" strokeWidth="3" strokeDasharray="8 7" />}
+    {config.arrows?.map((arrow, index) => <line key={`${arrow.from}-${arrow.to}-${index}`} x1={xFor(arrow.from)} y1="56" x2={xFor(arrow.to)} y2="56" stroke="#d9ad45" strokeWidth="4" markerEnd="url(#number-line-arrow)" />)}
+    {config.points.map((point) => <g key={`${point.value}-${point.label}`}><circle cx={xFor(point.value)} cy="78" r="8" fill="#d9ad45" stroke="#173f32" strokeWidth="3" /><text x={xFor(point.value)} y="30" textAnchor="middle" fill="#173f32" fontSize="23" fontWeight="700">{point.label}</text></g>)}
+  </svg></div>;
+}
+
 function QuestionScreen({ onBack }: { onBack: () => void }) {
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [attempt, setAttempt] = useState(0);
-  const [message, setMessage] = useState('');
+  const [feedback, setFeedback] = useState<{ kind: 'correct' | 'hint' | 'solution' | 'empty'; text: string } | null>(null);
+  const question: FirstStageQuestion = firstStageQuestions[questionIndex];
+  const total = firstStageQuestions.length;
+  const completed = questionIndex === total - 1 && feedback?.kind === 'correct';
+  const contextQuestion = Boolean(question.inputLabel);
+
   const submit = () => {
-    if (answer.trim().replace('−', '-') === '-8') { setMessage('答對了。兩個負數相加，結果仍是負數。'); return; }
-    setAttempt((value) => Math.min(value + 1, 3));
-    setMessage(attempt === 0 ? '再想一想：兩個數的符號是否相同？' : attempt === 1 ? '提示：同號相加，把絕對值相加，再保留共同符號。' : '完整解法：−3＋(−5)＝−(3＋5)＝−8');
+    if (!answer.trim()) {
+      setFeedback({ kind: 'empty', text: '請先輸入答案。' });
+      return;
+    }
+    if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
+      setFeedback({ kind: 'correct', text: `答對了。答案是 ${question.answerDisplay}。` });
+      return;
+    }
+    const nextAttempt = Math.min(attempt + 1, 3);
+    setAttempt(nextAttempt);
+    setFeedback(nextAttempt === 1
+      ? { kind: 'hint', text: '先檢查方向及正負號，再重新作答。' }
+      : nextAttempt === 2
+        ? { kind: 'hint', text: `提示：${question.hint}` }
+        : { kind: 'solution', text: `完整解法：${question.solution}` });
   };
-  return (
-    <section className="mx-auto max-w-[1040px] px-6 py-6">
-      <div className="mb-5 flex items-center justify-between"><Button variant="ghost" onClick={onBack}><ArrowLeft className="size-4" /> 返回地圖</Button><div className="text-right"><p className="text-xs font-bold text-forest">同號加法 · 第 4／13 題</p><Progress value={31} className="mt-2 w-56" /></div></div>
-      <div className="question-card mx-auto max-w-3xl rounded-[28px] border border-forest/15 bg-white px-9 py-8 shadow-sm">
-        <div className="mb-7 flex items-center justify-between"><Badge variant="secondary">核心練習</Badge><span className="text-xs text-muted-foreground">首次答對可保留 3 星</span></div>
-        <p className="text-center text-sm font-semibold text-forest/65">計算以下算式。</p><div className="my-8 text-center text-5xl font-semibold tracking-wide text-forest">−3＋(−5)</div>
-        <label htmlFor="answer" className="mb-2 block text-sm font-bold">你的答案</label>
-        <div className="flex gap-3"><Input id="answer" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="使用下方數學鍵盤" className="h-12 text-xl" /><Button className="h-12 px-7" onClick={submit}>提交</Button></div>
-        <div className="mt-4 grid grid-cols-7 gap-2" aria-label="數學鍵盤">{['7','8','9','4','5','6','1','2','3','0','−','＋','(',')'].map((key) => <Button key={key} variant="outline" className="h-11 text-lg" onClick={() => setAnswer((value) => value + key)}>{key}</Button>)}</div>
-        {message && <div className={`mt-5 rounded-2xl border p-4 text-sm ${message.startsWith('答對') ? 'border-forest/25 bg-forest/8 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{message.startsWith('答對') ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{message}</p>{attempt > 0 && attempt < 3 && <Button variant="link" className="mt-2 h-auto p-0 text-forest" onClick={() => setMessage('提示：同號相加，把絕對值相加，再保留共同符號。')}>給我提示</Button>}</div></div></div>}
-      </div>
-    </section>
-  );
+
+  const nextQuestion = () => {
+    setQuestionIndex((value) => Math.min(value + 1, total - 1));
+    setAnswer('');
+    setAttempt(0);
+    setFeedback(null);
+  };
+
+  return <section className="mx-auto max-w-[1040px] px-6 py-6">
+    <div className="mb-5 flex items-center justify-between"><Button variant="ghost" onClick={onBack}><ArrowLeft className="size-4" /> 返回地圖</Button><div className="text-right"><p className="text-xs font-bold text-forest">數線方向 · 第 {questionIndex + 1}／{total} 題</p><Progress value={((questionIndex + 1) / total) * 100} className="mt-2 w-56" /></div></div>
+    <div className="question-card mx-auto max-w-3xl rounded-[28px] border border-forest/15 bg-white px-6 py-7 shadow-sm sm:px-9 sm:py-8">
+      <div className="mb-5 flex items-center justify-between gap-3"><Badge variant="secondary">{question.section}</Badge><span className="text-right text-xs text-muted-foreground">難度 {question.difficulty} · 首次答對可保留 3 星</span></div>
+      <p className="text-center text-sm font-semibold text-forest/65">{contextQuestion ? '以有向數表示以下情境。' : '請根據數線及題意作答。'}</p>
+      <p className="my-7 text-center text-2xl font-semibold leading-relaxed tracking-wide text-forest sm:text-3xl">{question.prompt}</p>
+      {question.numberLine && <NumberLine config={question.numberLine} />}
+      {question.inputLabel && <p className="mt-5 rounded-xl bg-forest/6 px-4 py-3 text-center text-xs text-forest/80">{question.inputLabel}</p>}
+      <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="answer" inputMode="numeric" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
+      <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-7" aria-label="數學鍵盤">{['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '−', '＋'].map((key) => <Button key={key} type="button" variant="outline" className="h-11 text-lg" onClick={() => setAnswer((value) => value + key)}>{key}</Button>)}<Button type="button" variant="outline" className="col-span-2 h-11 text-sm sm:col-span-1" onClick={() => setAnswer('')}>清除</Button></div>
+      {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成並返回地圖</Button>}</div></div></div>}
+      <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、6 題核心練習及 3 題綜合或挑戰。</p>
+    </div>
+  </section>;
 }
 
 function TeacherShell({ active, children }: { active: string; children: React.ReactNode }) {

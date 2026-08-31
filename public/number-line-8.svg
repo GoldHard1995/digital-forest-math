@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 180" role="img" aria-labelledby="title desc">
+  <title id="title">由 −8 到 ＋8 的數線</title>
+  <desc id="desc">每一格代表一個單位，向右為正方向，向左為負方向。</desc>
+  <style>
+    .axis { stroke: #173f32; stroke-width: 4; stroke-linecap: round; }
+    .tick { stroke: #173f32; stroke-width: 2; }
+    .label { fill: #173f32; font-family: 'Noto Sans TC', 'PingFang TC', sans-serif; font-size: 24px; }
+    .zero { font-weight: 700; }
+  </style>
+  <line x1="36" y1="78" x2="1324" y2="78" class="axis" />
+  <polygon points="26,78 44,68 44,88" fill="#173f32" />
+  <polygon points="1334,78 1316,68 1316,88" fill="#173f32" />
+  <line x1="64.00" y1="71.00" x2="64.00" y2="85.00" class="tick" /><text x="64.00" y="118" class="label" text-anchor="middle">−8</text><line x1="141.00" y1="71.00" x2="141.00" y2="85.00" class="tick" /><text x="141.00" y="118" class="label" text-anchor="middle">−7</text><line x1="218.00" y1="71.00" x2="218.00" y2="85.00" class="tick" /><text x="218.00" y="118" class="label" text-anchor="middle">−6</text><line x1="295.00" y1="71.00" x2="295.00" y2="85.00" class="tick" /><text x="295.00" y="118" class="label" text-anchor="middle">−5</text><line x1="372.00" y1="71.00" x2="372.00" y2="85.00" class="tick" /><text x="372.00" y="118" class="label" text-anchor="middle">−4</text><line x1="449.00" y1="71.00" x2="449.00" y2="85.00" class="tick" /><text x="449.00" y="118" class="label" text-anchor="middle">−3</text><line x1="526.00" y1="71.00" x2="526.00" y2="85.00" class="tick" /><text x="526.00" y="118" class="label" text-anchor="middle">−2</text><line x1="603.00" y1="71.00" x2="603.00" y2="85.00" class="tick" /><text x="603.00" y="118" class="label" text-anchor="middle">−1</text><line x1="680.00" y1="71.00" x2="680.00" y2="85.00" class="tick" /><text x="680.00" y="118" class="label" text-anchor="middle">0</text><line x1="757.00" y1="71.00" x2="757.00" y2="85.00" class="tick" /><text x="757.00" y="118" class="label" text-anchor="middle">＋1</text><line x1="834.00" y1="71.00" x2="834.00" y2="85.00" class="tick" /><text x="834.00" y="118" class="label" text-anchor="middle">＋2</text><line x1="911.00" y1="71.00" x2="911.00" y2="85.00" class="tick" /><text x="911.00" y="118" class="label" text-anchor="middle">＋3</text><line x1="988.00" y1="71.00" x2="988.00" y2="85.00" class="tick" /><text x="988.00" y="118" class="label" text-anchor="middle">＋4</text><line x1="1065.00" y1="71.00" x2="1065.00" y2="85.00" class="tick" /><text x="1065.00" y="118" class="label" text-anchor="middle">＋5</text><line x1="1142.00" y1="71.00" x2="1142.00" y2="85.00" class="tick" /><text x="1142.00" y="118" class="label" text-anchor="middle">＋6</text><line x1="1219.00" y1="71.00" x2="1219.00" y2="85.00" class="tick" /><text x="1219.00" y="118" class="label" text-anchor="middle">＋7</text><line x1="1296.00" y1="71.00" x2="1296.00" y2="85.00" class="tick" /><text x="1296.00" y="118" class="label" text-anchor="middle">＋8</text>
+  <text x="680.0" y="170" class="label" text-anchor="middle">向左為負方向　　向右為正方向</text>
+</svg>
