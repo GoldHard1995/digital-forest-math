@@ -45,7 +45,6 @@ export default function Home() {
   const [demoMode, setDemoMode] = useState(!supabase);
 
   const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
-
   useEffect(() => {
     if (!supabase) return;
     const loadProfile = async (userId: string) => {
