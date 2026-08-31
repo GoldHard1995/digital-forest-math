@@ -71,6 +71,8 @@
 .stage-node { @apply mx-auto grid size-14 place-items-center rounded-full border-4 border-white bg-forest text-cream shadow-md; }
 .stage.active { @apply bg-white/75 shadow-sm; }
 .stage.active .stage-node { @apply size-16 bg-gold text-forest ring-4 ring-gold/25; }
+.stage.available { @apply bg-white/60 shadow-sm; }
+.stage.available .stage-node { @apply bg-forest text-cream ring-4 ring-forest/15; }
 .stage.locked { @apply cursor-not-allowed opacity-45; }
 .stage.locked .stage-node { @apply bg-slate-500; }
 .field-select { @apply h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50; }

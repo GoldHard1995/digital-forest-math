@@ -1,6 +1,6 @@
 # 數字森林：系統架構
 
-最後更新：2026-08-30
+最後更新：2026-08-31
 
 ## 架構概覽
 
@@ -23,7 +23,7 @@ GitHub main ── 自動建置 ──> Cloudflare Pages
 
 ### 應用程式
 
-- `app/page.tsx`：單頁低擬真原型，包含登入、角色分流、學生地圖、第一關答題及教師原型。功能增加後應按領域逐步拆分，不應一次重寫整個檔案。
+- `app/page.tsx`：單頁低擬真原型，包含登入、角色分流、學生地圖、第一、二關答題及教師原型。功能增加後應按領域逐步拆分，不應一次重寫整個檔案。
 - `app/globals.css`：全域樣式及主題。
 - `main.tsx`、`index.html`：靜態 `Vite` 入口。
 - `components/ui/`：`shadcn` 風格的基礎 UI 元件。
@@ -31,6 +31,7 @@ GitHub main ── 自動建置 ──> Cloudflare Pages
 ### 教學內容及資源
 
 - `lib/first-stage-content.ts`：第一關已核准的本機內容。目前它是審核中的來源，不是正式資料庫題庫。
+- `lib/second-stage-content.ts`：第二關「比較大小」已核准的本機內容，包含符號選擇及拖拉排列互動。目前它是審核中的來源，不是正式資料庫題庫。
 - `public/number-line-8.svg`：網站使用的 `−8` 至 `＋8` 數線。
 - `public/number-line-8.png`、`public/number-line-8.pdf`：審閱用輸出。
 - `scripts/draw_number_line.py`：重建數線資源。
