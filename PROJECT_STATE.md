@@ -10,7 +10,7 @@
 - 前端：`React 19`、`TypeScript`、`Vite`、`Tailwind CSS`
 - 後端：`Supabase Auth` 及 `Postgres`
 - 部署：`GitHub main` → `Cloudflare Pages`
-- 現階段：已建立可登入的低擬真原型；第一關 `13` 題內容已由教師核准並完成內容 QA，但全部仍在本機工作樹內，尚未提交或發布；正式作答資料及教師報表仍未接駁。
+- 現階段：已建立可登入的低擬真原型；第一關 `13` 題內容已由教師核准、完成內容 QA 並作本地提交（`9a068dc`），但尚未推送至 `GitHub` 或部署；正式作答資料及教師報表仍未接駁。
 
 ## 最終目標
 
@@ -57,7 +57,7 @@
 - 新增：`scripts/draw_number_line.py`
 - 新增：本次交接文件 `PLAN.md`、`PROJECT_STATE.md` 及 `docs/`
 
-這些第一關改動目前只存在於本機，尚未推送至 `GitHub`，亦未部署至正式網址。
+這些第一關改動已於本機提交於 `9a068dc`，但尚未推送至 `GitHub`，亦未部署至正式網址。
 
 ## 尚未完成項目
 
@@ -126,7 +126,7 @@
 ## 下一步應該做甚麼
 
 1. 教師已核准第一關 `13` 題；內容 QA、`npm run build` 及 `npm run lint` 已通過，待進行橫屏試玩及最終差異審閱。
-2. 經教師同意後，提交目前本機第一關改動，推送至 `GitHub` 並核對 `Cloudflare Pages` 正式部署。
+2. 獲得明確的外部發布授權後，推送本地提交 `9a068dc` 至 `GitHub` 並核對 `Cloudflare Pages` 正式部署。
 3. 經教師同意後，提交目前本機第一關改動，推送至 `GitHub` 並核對 `Cloudflare Pages` 正式部署。
 4. 把 `Supabase` schema、migration、seed 及 `RLS` 政策納入 repository；先以無個人資料的測試資料驗證。
 5. 以正式資料保存題目版本、活動、作答、提示、補救、星級及進度，移除相關硬編碼狀態。
