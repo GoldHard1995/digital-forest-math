@@ -1,0 +1,145 @@
+export type FourthStageSection = '基礎回想' | '核心練習' | '綜合或挑戰';
+
+export type FourthStageQuestion = {
+  id: string;
+  section: FourthStageSection;
+  difficulty: 1 | 2 | 3;
+  prompt: string;
+  answer: string;
+  answerDisplay: string;
+  hint: string;
+  solution: string;
+};
+
+export const fourthStageQuestions: FourthStageQuestion[] = [
+  {
+    id: 'NF4-A01',
+    section: '基礎回想',
+    difficulty: 1,
+    prompt: '（＋7）＋（−4）＝？',
+    answer: '3',
+    answerDisplay: '＋3',
+    hint: '兩個數是異號，先用較大絕對值減去較小絕對值，再取較大絕對值的符號。',
+    solution: '7＞4，7−4＝3；較大絕對值 7 的符號是正，所以答案是 ＋3。',
+  },
+  {
+    id: 'NF4-A02',
+    section: '基礎回想',
+    difficulty: 1,
+    prompt: '（−8）＋（＋3）＝？',
+    answer: '-5',
+    answerDisplay: '−5',
+    hint: '異號相加時，較大的絕對值是 8，所以答案取負號。',
+    solution: '8＞3，8−3＝5；較大絕對值 8 的符號是負，所以答案是 −5。',
+  },
+  {
+    id: 'NF4-A03',
+    section: '基礎回想',
+    difficulty: 1,
+    prompt: '正 6 加上負 9，結果是多少？',
+    answer: '-3',
+    answerDisplay: '−3',
+    hint: '9 的絕對值比 6 大，結果要取負號。',
+    solution: '9−6＝3；較大絕對值 9 的符號是負，所以答案是 −3。',
+  },
+  {
+    id: 'NF4-A04',
+    section: '基礎回想',
+    difficulty: 1,
+    prompt: '負 4 加上正 9，結果是多少？',
+    answer: '5',
+    answerDisplay: '＋5',
+    hint: '9 的絕對值比 4 大，結果要取正號。',
+    solution: '9−4＝5；較大絕對值 9 的符號是正，所以答案是 ＋5。',
+  },
+  {
+    id: 'NF4-B01',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '（＋46）＋（−29）＝？',
+    answer: '17',
+    answerDisplay: '＋17',
+    hint: '異號相加要計算 46−29，並取較大絕對值 46 的正號。',
+    solution: '46＞29，46−29＝17；較大絕對值 46 的符號是正，所以答案是 ＋17。',
+  },
+  {
+    id: 'NF4-B02',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '（−78）＋（＋35）＝？',
+    answer: '-43',
+    answerDisplay: '−43',
+    hint: '先計算 78−35，再取較大絕對值 78 的負號。',
+    solution: '78＞35，78−35＝43；較大絕對值 78 的符號是負，所以答案是 −43。',
+  },
+  {
+    id: 'NF4-B03',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '＋63＋（−91）＝？',
+    answer: '-28',
+    answerDisplay: '−28',
+    hint: '91 的絕對值比 63 大，先計算 91−63。',
+    solution: '91＞63，91−63＝28；較大絕對值 91 的符號是負，所以答案是 −28。',
+  },
+  {
+    id: 'NF4-B04',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '（−54）＋（＋86）＝？',
+    answer: '32',
+    answerDisplay: '＋32',
+    hint: '86 的絕對值比 54 大，答案取正號。',
+    solution: '86＞54，86−54＝32；較大絕對值 86 的符號是正，所以答案是 ＋32。',
+  },
+  {
+    id: 'NF4-B05',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '正 72 加上負 38，結果是多少？',
+    answer: '34',
+    answerDisplay: '＋34',
+    hint: '72 的絕對值比 38 大，先計算 72−38。',
+    solution: '72−38＝34；較大絕對值 72 的符號是正，所以答案是 ＋34。',
+  },
+  {
+    id: 'NF4-B06',
+    section: '核心練習',
+    difficulty: 2,
+    prompt: '負 95 加上正 47，結果是多少？',
+    answer: '-48',
+    answerDisplay: '−48',
+    hint: '95 的絕對值比 47 大，先計算 95−47，再取負號。',
+    solution: '95−47＝48；較大絕對值 95 的符號是負，所以答案是 −48。',
+  },
+  {
+    id: 'NF4-C01',
+    section: '綜合或挑戰',
+    difficulty: 3,
+    prompt: '（＋38）＋（−57）＋（＋26）＝？',
+    answer: '7',
+    answerDisplay: '＋7',
+    hint: '可先計算前兩個數：38−57＝−19，再加上 ＋26。',
+    solution: '（＋38）＋（−57）＝−19，−19＋26＝＋7，所以答案是 ＋7。',
+  },
+  {
+    id: 'NF4-C02',
+    section: '綜合或挑戰',
+    difficulty: 3,
+    prompt: '（−64）＋（＋29）＋（−18）＝？',
+    answer: '-53',
+    answerDisplay: '−53',
+    hint: '先計算前兩個數：−64＋29＝−35，再加上 −18。',
+    solution: '（−64）＋（＋29）＝−35，−35＋（−18）＝−53，所以答案是 −53。',
+  },
+  {
+    id: 'NF4-C03',
+    section: '綜合或挑戰',
+    difficulty: 3,
+    prompt: '（＋75）＋（−46）＋（−38）＝？',
+    answer: '-9',
+    answerDisplay: '−9',
+    hint: '先計算前兩個數：75−46＝29，再加上 −38。',
+    solution: '（＋75）＋（−46）＝29，29＋（−38）＝−9，所以答案是 −9。',
+  },
+];

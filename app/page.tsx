@@ -16,15 +16,16 @@ import { supabase } from '@/lib/supabase';
 import { firstStageQuestions, type FirstStageQuestion, type NumberLineConfig } from '@/lib/first-stage-content';
 import { secondStageQuestions, type DragOrderInteraction, type SecondStageQuestion } from '@/lib/second-stage-content';
 import { thirdStageQuestions, type ThirdStageQuestion } from '@/lib/third-stage-content';
+import { fourthStageQuestions, type FourthStageQuestion } from '@/lib/fourth-stage-content';
 
-type View = 'map' | 'question' | 'second-question' | 'third-question' | 'teacher' | 'assign' | 'report';
+type View = 'map' | 'question' | 'second-question' | 'third-question' | 'fourth-question' | 'teacher' | 'assign' | 'report';
 type Profile = { full_name: string; role: 'admin' | 'teacher' | 'student'; character_name: string | null };
 
 const stages = [
   { title: '數線方向', subtitle: '教師最新指派', stars: 0, status: 'active' },
   { title: '比較大小', subtitle: '可試玩', stars: 0, status: 'available' },
   { title: '同號加法', subtitle: '可試玩', stars: 0, status: 'available' },
-  { title: '異號加法', subtitle: '尚未解鎖', stars: 0, status: 'locked' },
+  { title: '異號加法', subtitle: '可試玩', stars: 0, status: 'available' },
   { title: '聚能獸', subtitle: '加法小頭目', stars: 0, status: 'locked' },
 ];
 
@@ -82,10 +83,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} canViewTeacher={canViewTeacher} onSignOut={signOut} />
-      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} profile={profile} demoMode={demoMode} />}
+      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} onStartFourth={() => setView('fourth-question')} profile={profile} demoMode={demoMode} />}
       {view === 'question' && <QuestionScreen onBack={goStudent} />}
       {view === 'second-question' && <SecondStageScreen onBack={goStudent} />}
       {view === 'third-question' && <ThirdStageScreen onBack={goStudent} />}
+      {view === 'fourth-question' && <FourthStageScreen onBack={goStudent} />}
       {canViewTeacher && view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
       {canViewTeacher && view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
       {canViewTeacher && view === 'report' && <ReportScreen onBack={goTeacher} />}
@@ -133,7 +135,7 @@ function Header({ view, goStudent, goTeacher, profile, demoMode, canViewTeacher,
   );
 }
 
-function StudentMap({ onStartFirst, onStartSecond, onStartThird, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; profile: Profile | null; demoMode: boolean }) {
+function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; onStartFourth: () => void; profile: Profile | null; demoMode: boolean }) {
   return (
     <section className="mx-auto max-w-[1180px] px-6 py-7">
       <div className="mb-6 flex items-end justify-between gap-5">
@@ -146,12 +148,12 @@ function StudentMap({ onStartFirst, onStartSecond, onStartThird, profile, demoMo
           <div className="path-line" aria-hidden="true" />
           <div className="relative z-10 grid grid-cols-5 gap-3 pt-14">
             {stages.map((stage, index) => (
-              <button key={stage.title} type="button" disabled={stage.status === 'locked'} onClick={stage.status === 'active' ? onStartFirst : stage.status === 'available' ? (index === 1 ? onStartSecond : onStartThird) : undefined} className={`stage ${stage.status}`} aria-label={`${stage.title}，${stage.subtitle}`}>
+              <button key={stage.title} type="button" disabled={stage.status === 'locked'} onClick={stage.status === 'active' ? onStartFirst : stage.status === 'available' ? (index === 1 ? onStartSecond : index === 2 ? onStartThird : onStartFourth) : undefined} className={`stage ${stage.status}`} aria-label={`${stage.title}，${stage.subtitle}`}>
                 <span className="stage-node">{stage.status === 'locked' ? <LockKeyhole className="size-5" /> : stage.status === 'active' ? <Sparkles className="size-6" /> : <ShieldCheck className="size-5" />}</span>
                 <span className="mt-3 block text-sm font-bold">{stage.title}</span><span className="mt-1 block text-[11px] opacity-70">{stage.subtitle}</span>
                 {stage.stars > 0 && <span className="mt-2 flex justify-center gap-0.5 text-gold">{Array.from({ length: 3 }).map((_, star) => <Star key={star} className={`size-3 ${star < stage.stars ? 'fill-current' : 'opacity-25'}`} />)}</span>}
                 {index === 0 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">開始</span>}
-                {(index === 1 || index === 2) && <span className="mt-3 inline-flex rounded-full bg-forest px-2 py-1 text-[10px] font-bold text-cream">試玩</span>}
+                {(index === 1 || index === 2 || index === 3) && <span className="mt-3 inline-flex rounded-full bg-forest px-2 py-1 text-[10px] font-bold text-cream">試玩</span>}
               </button>
             ))}
           </div>
@@ -353,7 +355,7 @@ function SecondStageScreen({ onBack }: { onBack: () => void }) {
   </section>;
 }
 
-function sanitizeThirdStageInput(value: string, allowDecimal: boolean) {
+function sanitizeNumericInput(value: string, allowDecimal: boolean) {
   const asciiValue = value.replaceAll('−', '-').replaceAll('＋', '+');
   const hasNegativeSign = asciiValue.startsWith('-');
   const hasPositiveSign = !hasNegativeSign && asciiValue.startsWith('+');
@@ -366,22 +368,22 @@ function sanitizeThirdStageInput(value: string, allowDecimal: boolean) {
   return `${sign}${integerPart}.${decimalPart}`;
 }
 
-function isCompleteThirdStageAnswer(value: string, allowDecimal: boolean) {
+function isCompleteNumericAnswer(value: string, allowDecimal: boolean) {
   const normalized = normalizeNumericAnswer(value);
   return allowDecimal
     ? /^[+-]?(?:\d+(?:\.\d)?|\.\d)$/.test(normalized)
     : /^[+-]?\d+$/.test(normalized);
 }
 
-function appendThirdStageKey(value: string, key: string, allowDecimal: boolean) {
+function appendNumericKey(value: string, key: string, allowDecimal: boolean) {
   if (key === '清除') return '';
   if (key === '⌫') return value.slice(0, -1);
   if (key === '−' || key === '＋') return value ? value : key;
   if (key === '.' && (!allowDecimal || value.includes('.'))) return value;
-  return sanitizeThirdStageInput(`${value}${key}`, allowDecimal);
+  return sanitizeNumericInput(`${value}${key}`, allowDecimal);
 }
 
-function ThirdStageKeypad({ allowDecimal, onKey }: { allowDecimal: boolean; onKey: (key: string) => void }) {
+function NumericKeypad({ allowDecimal, onKey }: { allowDecimal: boolean; onKey: (key: string) => void }) {
   const keys = allowDecimal
     ? ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '.', '−', '＋']
     : ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '−', '＋'];
@@ -403,7 +405,7 @@ function ThirdStageScreen({ onBack }: { onBack: () => void }) {
   const completed = questionIndex === total - 1 && feedback?.kind === 'correct';
 
   const submit = () => {
-    if (!isCompleteThirdStageAnswer(answer, allowDecimal)) {
+    if (!isCompleteNumericAnswer(answer, allowDecimal)) {
       setFeedback({ kind: 'empty', text: answer.trim() ? (allowDecimal ? '請輸入完整數值，小數部分最多 1 位。' : '請輸入完整的整數答案。') : '請先輸入答案。' });
       return;
     }
@@ -434,9 +436,57 @@ function ThirdStageScreen({ onBack }: { onBack: () => void }) {
       <p className="text-center text-sm font-semibold text-forest/65">把同號數字的絕對值相加，再保留共同符號。</p>
       <p className="my-7 text-center text-2xl font-semibold leading-relaxed tracking-wide text-forest sm:text-3xl">{question.prompt}</p>
       {question.inputLabel && <p className="mt-5 rounded-xl bg-forest/6 px-4 py-3 text-center text-xs text-forest/80">{question.inputLabel}</p>}
-      <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="third-stage-answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="third-stage-answer" inputMode={allowDecimal ? 'decimal' : 'numeric'} value={answer} onChange={(event) => setAnswer(sanitizeThirdStageInput(event.target.value, allowDecimal))} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
-      <ThirdStageKeypad allowDecimal={allowDecimal} onKey={(key) => setAnswer((value) => appendThirdStageKey(value, key, allowDecimal))} />
+      <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="third-stage-answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="third-stage-answer" inputMode={allowDecimal ? 'decimal' : 'numeric'} value={answer} onChange={(event) => setAnswer(sanitizeNumericInput(event.target.value, allowDecimal))} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
+      <NumericKeypad allowDecimal={allowDecimal} onKey={(key) => setAnswer((value) => appendNumericKey(value, key, allowDecimal))} />
       {allowDecimal && <p className="mt-3 text-center text-xs text-muted-foreground">本題可輸入小數，小數部分最多 1 位。</p>}
+      {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成並返回地圖</Button>}</div></div></div>}
+      <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、6 題核心練習及 3 題綜合或挑戰。</p>
+    </div>
+  </section>;
+}
+
+function FourthStageScreen({ onBack }: { onBack: () => void }) {
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [answer, setAnswer] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const [feedback, setFeedback] = useState<{ kind: 'correct' | 'hint' | 'solution' | 'empty'; text: string } | null>(null);
+  const question: FourthStageQuestion = fourthStageQuestions[questionIndex];
+  const total = fourthStageQuestions.length;
+  const completed = questionIndex === total - 1 && feedback?.kind === 'correct';
+
+  const submit = () => {
+    if (!isCompleteNumericAnswer(answer, false)) {
+      setFeedback({ kind: 'empty', text: answer.trim() ? '請輸入完整的整數答案。' : '請先輸入答案。' });
+      return;
+    }
+    if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
+      setFeedback({ kind: 'correct', text: `答對了。答案是 ${question.answerDisplay}。` });
+      return;
+    }
+    const nextAttempt = Math.min(attempt + 1, 3);
+    setAttempt(nextAttempt);
+    setFeedback(nextAttempt === 1
+      ? { kind: 'hint', text: '先比較異號數字的絕對值，再決定結果的正負號。' }
+      : nextAttempt === 2
+        ? { kind: 'hint', text: `提示：${question.hint}` }
+        : { kind: 'solution', text: `完整解法：${question.solution}` });
+  };
+
+  const nextQuestion = () => {
+    setQuestionIndex((value) => Math.min(value + 1, total - 1));
+    setAnswer('');
+    setAttempt(0);
+    setFeedback(null);
+  };
+
+  return <section className="mx-auto max-w-[1040px] px-6 py-6">
+    <div className="mb-5 flex items-center justify-between"><Button variant="ghost" onClick={onBack}><ArrowLeft className="size-4" /> 返回地圖</Button><div className="text-right"><p className="text-xs font-bold text-forest">異號加法 · 第 {questionIndex + 1}／{total} 題</p><Progress value={((questionIndex + 1) / total) * 100} className="mt-2 w-56" /></div></div>
+    <div className="question-card mx-auto max-w-3xl rounded-[28px] border border-forest/15 bg-white px-6 py-7 shadow-sm sm:px-9 sm:py-8">
+      <div className="mb-5 flex items-center justify-between gap-3"><Badge variant="secondary">{question.section}</Badge><span className="text-right text-xs text-muted-foreground">難度 {question.difficulty} · 首次答對可保留 3 星</span></div>
+      <p className="text-center text-sm font-semibold text-forest/65">異號相加時，先比較絕對值，再決定結果的正負號。</p>
+      <p className="my-7 text-center text-2xl font-semibold leading-relaxed tracking-wide text-forest sm:text-3xl">{question.prompt}</p>
+      <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="fourth-stage-answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="fourth-stage-answer" inputMode="numeric" value={answer} onChange={(event) => setAnswer(sanitizeNumericInput(event.target.value, false))} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
+      <NumericKeypad allowDecimal={false} onKey={(key) => setAnswer((value) => appendNumericKey(value, key, false))} />
       {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成並返回地圖</Button>}</div></div></div>}
       <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、6 題核心練習及 3 題綜合或挑戰。</p>
     </div>
