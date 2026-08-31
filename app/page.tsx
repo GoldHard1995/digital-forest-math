@@ -17,8 +17,9 @@ import { firstStageQuestions, type FirstStageQuestion, type NumberLineConfig } f
 import { secondStageQuestions, type DragOrderInteraction, type SecondStageQuestion } from '@/lib/second-stage-content';
 import { thirdStageQuestions, type ThirdStageQuestion } from '@/lib/third-stage-content';
 import { fourthStageQuestions, type FourthStageQuestion } from '@/lib/fourth-stage-content';
+import { bossStageQuestions, type BossStageQuestion } from '@/lib/boss-stage-content';
 
-type View = 'map' | 'question' | 'second-question' | 'third-question' | 'fourth-question' | 'teacher' | 'assign' | 'report';
+type View = 'map' | 'question' | 'second-question' | 'third-question' | 'fourth-question' | 'boss-question' | 'teacher' | 'assign' | 'report';
 type Profile = { full_name: string; role: 'admin' | 'teacher' | 'student'; character_name: string | null };
 
 const stages = [
@@ -26,7 +27,7 @@ const stages = [
   { title: '比較大小', subtitle: '可試玩', stars: 0, status: 'available' },
   { title: '同號加法', subtitle: '可試玩', stars: 0, status: 'available' },
   { title: '異號加法', subtitle: '可試玩', stars: 0, status: 'available' },
-  { title: '聚能獸', subtitle: '加法小頭目', stars: 0, status: 'locked' },
+  { title: '聚能獸', subtitle: '加法小頭目', stars: 0, status: 'available' },
 ];
 
 const students = [
@@ -83,11 +84,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} canViewTeacher={canViewTeacher} onSignOut={signOut} />
-      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} onStartFourth={() => setView('fourth-question')} profile={profile} demoMode={demoMode} />}
+      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} onStartFourth={() => setView('fourth-question')} onStartBoss={() => setView('boss-question')} profile={profile} demoMode={demoMode} />}
       {view === 'question' && <QuestionScreen onBack={goStudent} />}
       {view === 'second-question' && <SecondStageScreen onBack={goStudent} />}
       {view === 'third-question' && <ThirdStageScreen onBack={goStudent} />}
       {view === 'fourth-question' && <FourthStageScreen onBack={goStudent} />}
+      {view === 'boss-question' && <BossStageScreen onBack={goStudent} />}
       {canViewTeacher && view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
       {canViewTeacher && view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
       {canViewTeacher && view === 'report' && <ReportScreen onBack={goTeacher} />}
@@ -135,7 +137,7 @@ function Header({ view, goStudent, goTeacher, profile, demoMode, canViewTeacher,
   );
 }
 
-function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; onStartFourth: () => void; profile: Profile | null; demoMode: boolean }) {
+function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, onStartBoss, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; onStartFourth: () => void; onStartBoss: () => void; profile: Profile | null; demoMode: boolean }) {
   return (
     <section className="mx-auto max-w-[1180px] px-6 py-7">
       <div className="mb-6 flex items-end justify-between gap-5">
@@ -148,12 +150,13 @@ function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, 
           <div className="path-line" aria-hidden="true" />
           <div className="relative z-10 grid grid-cols-5 gap-3 pt-14">
             {stages.map((stage, index) => (
-              <button key={stage.title} type="button" disabled={stage.status === 'locked'} onClick={stage.status === 'active' ? onStartFirst : stage.status === 'available' ? (index === 1 ? onStartSecond : index === 2 ? onStartThird : onStartFourth) : undefined} className={`stage ${stage.status}`} aria-label={`${stage.title}，${stage.subtitle}`}>
+              <button key={stage.title} type="button" disabled={stage.status === 'locked'} onClick={stage.status === 'active' ? onStartFirst : stage.status === 'available' ? (index === 1 ? onStartSecond : index === 2 ? onStartThird : index === 3 ? onStartFourth : onStartBoss) : undefined} className={`stage ${stage.status}`} aria-label={`${stage.title}，${stage.subtitle}`}>
                 <span className="stage-node">{stage.status === 'locked' ? <LockKeyhole className="size-5" /> : stage.status === 'active' ? <Sparkles className="size-6" /> : <ShieldCheck className="size-5" />}</span>
                 <span className="mt-3 block text-sm font-bold">{stage.title}</span><span className="mt-1 block text-[11px] opacity-70">{stage.subtitle}</span>
                 {stage.stars > 0 && <span className="mt-2 flex justify-center gap-0.5 text-gold">{Array.from({ length: 3 }).map((_, star) => <Star key={star} className={`size-3 ${star < stage.stars ? 'fill-current' : 'opacity-25'}`} />)}</span>}
                 {index === 0 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">開始</span>}
                 {(index === 1 || index === 2 || index === 3) && <span className="mt-3 inline-flex rounded-full bg-forest px-2 py-1 text-[10px] font-bold text-cream">試玩</span>}
+                {index === 4 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">挑戰</span>}
               </button>
             ))}
           </div>
@@ -489,6 +492,62 @@ function FourthStageScreen({ onBack }: { onBack: () => void }) {
       <NumericKeypad allowDecimal={false} onKey={(key) => setAnswer((value) => appendNumericKey(value, key, false))} />
       {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成並返回地圖</Button>}</div></div></div>}
       <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、6 題核心練習及 3 題綜合或挑戰。</p>
+    </div>
+  </section>;
+}
+
+function BossStageScreen({ onBack }: { onBack: () => void }) {
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [answer, setAnswer] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const [feedback, setFeedback] = useState<{ kind: 'correct' | 'hint' | 'solution' | 'empty'; text: string } | null>(null);
+  const question: BossStageQuestion = bossStageQuestions[questionIndex];
+  const total = bossStageQuestions.length;
+  const completed = questionIndex === total - 1 && feedback?.kind === 'correct';
+  const defeatedCount = Math.min(questionIndex + (feedback?.kind === 'correct' ? 1 : 0), total);
+  const remainingHealth = total - defeatedCount;
+
+  const submit = () => {
+    if (feedback?.kind === 'correct') return;
+    if (!isCompleteNumericAnswer(answer, false)) {
+      setFeedback({ kind: 'empty', text: answer.trim() ? '請輸入完整的整數答案。' : '請先輸入答案。' });
+      return;
+    }
+    if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
+      setFeedback({ kind: 'correct', text: `答對了。聚能獸血量減少 1 格，答案是 ${question.answerDisplay}。` });
+      return;
+    }
+    const nextAttempt = Math.min(attempt + 1, 3);
+    setAttempt(nextAttempt);
+    setFeedback(nextAttempt === 1
+      ? { kind: 'hint', text: '先分辨同號或異號，再選擇相應的加法方法。' }
+      : nextAttempt === 2
+        ? { kind: 'hint', text: `提示：${question.hint}` }
+        : { kind: 'solution', text: `完整解法：${question.solution}` });
+  };
+
+  const nextQuestion = () => {
+    setQuestionIndex((value) => Math.min(value + 1, total - 1));
+    setAnswer('');
+    setAttempt(0);
+    setFeedback(null);
+  };
+
+  return <section className="mx-auto max-w-[1040px] px-6 py-6">
+    <div className="mb-5 flex items-center justify-between"><Button variant="ghost" onClick={onBack}><ArrowLeft className="size-4" /> 返回地圖</Button><div className="text-right"><p className="text-xs font-bold text-forest">加法小頭目 · 第 {questionIndex + 1}／{total} 題</p><Progress value={((questionIndex + 1) / total) * 100} className="mt-2 w-56" /></div></div>
+    <div className="question-card mx-auto max-w-3xl rounded-[28px] border border-forest/15 bg-white px-6 py-7 shadow-sm sm:px-9 sm:py-8">
+      <div className="mb-5 flex items-center justify-between gap-3"><Badge variant="secondary">聚能獸挑戰</Badge><span className="text-right text-xs text-muted-foreground">難度 {question.difficulty} · 答對一題削弱 1 格</span></div>
+      <div className="mb-6 rounded-2xl border border-gold/45 bg-gold/10 p-4" aria-label={`聚能獸血量，剩餘 ${remainingHealth} 格`}>
+        <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-forest">聚能獸血量</p><p className="text-sm font-bold text-forest">{remainingHealth}／{total} 格</p></div>
+        <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-10" aria-hidden="true">{Array.from({ length: total }).map((_, index) => <span key={index} className={`h-3 rounded-full border ${index < remainingHealth ? 'border-gold bg-gold' : 'border-forest/10 bg-forest/10'}`} />)}</div>
+        <Progress value={(remainingHealth / total) * 100} className="mt-3" aria-label={`聚能獸剩餘血量 ${remainingHealth} 格`} />
+      </div>
+      <p className="text-center text-sm font-semibold text-forest/65">整合前四關的有向數加法，答對後逐格削弱聚能獸。</p>
+      <p className="my-7 text-center text-2xl font-semibold leading-relaxed tracking-wide text-forest sm:text-3xl">{question.prompt}</p>
+      <form className="mt-6" onSubmit={(event) => { event.preventDefault(); submit(); }}><label htmlFor="boss-stage-answer" className="mb-2 block text-sm font-bold">你的答案</label><div className="flex gap-3"><Input id="boss-stage-answer" inputMode="numeric" value={answer} onChange={(event) => setAnswer(sanitizeNumericInput(event.target.value, false))} placeholder="使用下方數學鍵盤或直接輸入" className="h-12 text-xl" autoComplete="off" /><Button type="submit" className="h-12 px-7">提交</Button></div></form>
+      <NumericKeypad allowDecimal={false} onKey={(key) => setAnswer((value) => appendNumericKey(value, key, false))} />
+      {feedback && <div className={`mt-5 rounded-2xl border p-4 text-sm ${feedback.kind === 'correct' ? 'border-forest/25 bg-forest/8 text-forest' : feedback.kind === 'solution' ? 'border-gold/55 bg-gold/12 text-forest' : 'border-gold/45 bg-gold/10 text-forest'}`}><div className="flex gap-3">{feedback.kind === 'correct' ? <Check className="mt-0.5 size-5 shrink-0" /> : <CircleHelp className="mt-0.5 size-5 shrink-0" />}<div><p>{feedback.text}</p>{feedback.kind === 'correct' && !completed && <Button className="mt-3" onClick={nextQuestion}>下一題 <ChevronRight className="size-4" /></Button>}{completed && <Button className="mt-3" onClick={onBack}>完成挑戰並返回地圖</Button>}</div></div></div>}
+      <p className="mt-6 text-center text-xs text-muted-foreground">本關共 4 題基礎回想、4 題核心練習及 2 題綜合或挑戰；每答對一題，聚能獸血量減少 1 格。</p>
     </div>
   </section>;
 }
