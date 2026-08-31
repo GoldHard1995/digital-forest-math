@@ -21,6 +21,8 @@ import { bossStageQuestions, type BossStageQuestion } from '@/lib/boss-stage-con
 
 type View = 'map' | 'question' | 'second-question' | 'third-question' | 'fourth-question' | 'boss-question' | 'teacher' | 'assign' | 'report';
 type Profile = { full_name: string; role: 'admin' | 'teacher' | 'student'; character_name: string | null };
+type CoreStage = 'first' | 'second' | 'third' | 'fourth';
+type CompletedStages = Record<CoreStage, boolean>;
 
 const stages = [
   { title: '數線方向', subtitle: '教師最新指派', stars: 0, status: 'active' },
@@ -43,8 +45,10 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(Boolean(supabase));
   const [demoMode, setDemoMode] = useState(!supabase);
+  const [completedStages, setCompletedStages] = useState<CompletedStages>({ first: false, second: false, third: false, fourth: false });
 
   const canViewTeacher = demoMode || profile?.role === 'teacher' || profile?.role === 'admin' || session?.user.email?.toLowerCase() === 'kwh@tllf.edu.hk';
+  const allStagesCompleted = Object.values(completedStages).every(Boolean);
   useEffect(() => {
     if (!supabase) return;
     const loadProfile = async (userId: string) => {
@@ -73,8 +77,14 @@ export default function Home() {
     if (!canViewTeacher && ['teacher', 'assign', 'report'].includes(view)) setView('map');
   }, [canViewTeacher, view]);
 
+  useEffect(() => {
+    if (view === 'boss-question' && !allStagesCompleted) setView('map');
+  }, [allStagesCompleted, view]);
+
   const goStudent = () => setView('map');
   const goTeacher = () => { if (canViewTeacher) setView('teacher'); };
+  const goBoss = () => { if (allStagesCompleted) setView('boss-question'); };
+  const markStageCompleted = (stage: CoreStage) => setCompletedStages((current) => current[stage] ? current : { ...current, [stage]: true });
   const signOut = async () => { await supabase?.auth.signOut(); setDemoMode(false); };
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-background text-forest"><p className="text-sm">正在連接學習帳戶……</p></main>;
@@ -83,11 +93,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Header view={view} goStudent={goStudent} goTeacher={goTeacher} profile={profile} demoMode={demoMode} canViewTeacher={canViewTeacher} onSignOut={signOut} />
-      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} onStartFourth={() => setView('fourth-question')} onStartBoss={() => setView('boss-question')} profile={profile} demoMode={demoMode} />}
-      {view === 'question' && <QuestionScreen onBack={goStudent} />}
-      {view === 'second-question' && <SecondStageScreen onBack={goStudent} />}
-      {view === 'third-question' && <ThirdStageScreen onBack={goStudent} />}
-      {view === 'fourth-question' && <FourthStageScreen onBack={goStudent} />}
+      {view === 'map' && <StudentMap onStartFirst={() => setView('question')} onStartSecond={() => setView('second-question')} onStartThird={() => setView('third-question')} onStartFourth={() => setView('fourth-question')} onStartBoss={goBoss} completedStages={completedStages} profile={profile} demoMode={demoMode} />}
+      {view === 'question' && <QuestionScreen onBack={goStudent} onComplete={() => markStageCompleted('first')} />}
+      {view === 'second-question' && <SecondStageScreen onBack={goStudent} onComplete={() => markStageCompleted('second')} />}
+      {view === 'third-question' && <ThirdStageScreen onBack={goStudent} onComplete={() => markStageCompleted('third')} />}
+      {view === 'fourth-question' && <FourthStageScreen onBack={goStudent} onComplete={() => markStageCompleted('fourth')} />}
       {view === 'boss-question' && <BossStageScreen onBack={goStudent} />}
       {canViewTeacher && view === 'teacher' && <TeacherDashboard onAssign={() => setView('assign')} onReport={() => setView('report')} />}
       {canViewTeacher && view === 'assign' && <AssignmentScreen onBack={goTeacher} onDone={goTeacher} />}
@@ -136,7 +146,9 @@ function Header({ view, goStudent, goTeacher, profile, demoMode, canViewTeacher,
   );
 }
 
-function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, onStartBoss, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; onStartFourth: () => void; onStartBoss: () => void; profile: Profile | null; demoMode: boolean }) {
+function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, onStartBoss, completedStages, profile, demoMode }: { onStartFirst: () => void; onStartSecond: () => void; onStartThird: () => void; onStartFourth: () => void; onStartBoss: () => void; completedStages: CompletedStages; profile: Profile | null; demoMode: boolean }) {
+  const bossUnlocked = Object.values(completedStages).every(Boolean);
+  const completedCount = Object.values(completedStages).filter(Boolean).length;
   return (
     <section className="mx-auto max-w-[1180px] px-6 py-7">
       <div className="mb-6 flex items-end justify-between gap-5">
@@ -145,19 +157,22 @@ function StudentMap({ onStartFirst, onStartSecond, onStartThird, onStartFourth, 
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_270px]">
         <section aria-label="森林地圖" className="map-panel relative min-h-[470px] overflow-hidden rounded-[28px] border border-forest/15 p-6 shadow-sm">
-          <div className="mb-7 flex items-center justify-between"><div className="flex items-center gap-2 text-sm font-semibold text-forest"><Map className="size-4" /> 第一區：迷霧森林</div><span className="text-xs text-forest/70">進度 0／8</span></div>
+          <div className="mb-7 flex items-center justify-between"><div className="flex items-center gap-2 text-sm font-semibold text-forest"><Map className="size-4" /> 第一區：迷霧森林</div><span className="text-xs text-forest/70">前置關卡 {completedCount}／4</span></div>
           <div className="path-line" aria-hidden="true" />
           <div className="relative z-10 grid grid-cols-5 gap-3 pt-14">
-            {stages.map((stage, index) => (
-              <button key={stage.title} type="button" disabled={stage.status === 'locked'} onClick={stage.status === 'active' ? onStartFirst : stage.status === 'available' ? (index === 1 ? onStartSecond : index === 2 ? onStartThird : index === 3 ? onStartFourth : onStartBoss) : undefined} className={`stage ${stage.status}`} aria-label={`${stage.title}，${stage.subtitle}`}>
-                <span className="stage-node">{stage.status === 'locked' ? <LockKeyhole className="size-5" /> : stage.status === 'active' ? <Sparkles className="size-6" /> : <ShieldCheck className="size-5" />}</span>
-                <span className="mt-3 block text-sm font-bold">{stage.title}</span><span className="mt-1 block text-[11px] opacity-70">{stage.subtitle}</span>
+            {stages.map((stage, index) => {
+              const status = index === 4 && !bossUnlocked ? 'locked' : stage.status;
+              const subtitle = index === 4 && !bossUnlocked ? '完成前四關後解鎖' : stage.subtitle;
+              const action = index === 0 ? onStartFirst : index === 1 ? onStartSecond : index === 2 ? onStartThird : index === 3 ? onStartFourth : bossUnlocked ? onStartBoss : undefined;
+              return <button key={stage.title} type="button" disabled={status === 'locked'} onClick={status === 'locked' ? undefined : action} className={`stage ${status}`} aria-label={`${stage.title}，${subtitle}`}>
+                <span className="stage-node">{status === 'locked' ? <LockKeyhole className="size-5" /> : status === 'active' ? <Sparkles className="size-6" /> : <ShieldCheck className="size-5" />}</span>
+                <span className="mt-3 block text-sm font-bold">{stage.title}</span><span className="mt-1 block text-[11px] opacity-70">{subtitle}</span>
                 {stage.stars > 0 && <span className="mt-2 flex justify-center gap-0.5 text-gold">{Array.from({ length: 3 }).map((_, star) => <Star key={star} className={`size-3 ${star < stage.stars ? 'fill-current' : 'opacity-25'}`} />)}</span>}
                 {index === 0 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">開始</span>}
                 {(index === 1 || index === 2 || index === 3) && <span className="mt-3 inline-flex rounded-full bg-forest px-2 py-1 text-[10px] font-bold text-cream">試玩</span>}
-                {index === 4 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">挑戰</span>}
-              </button>
-            ))}
+                {index === 4 && <span className="mt-3 inline-flex rounded-full bg-gold px-2 py-1 text-[10px] font-bold text-forest">{bossUnlocked ? '挑戰' : '完成前四關解鎖'}</span>}
+              </button>;
+            })}
           </div>
           <div className="absolute bottom-5 left-6 rounded-xl border border-forest/10 bg-cream/90 px-4 py-3 text-xs text-forest shadow-sm"><span className="font-bold">故事提示：</span> 聚能獸正在擾亂同號能量。</div>
         </section>
@@ -189,7 +204,7 @@ function NumberLine({ config, answer }: { config: NumberLineConfig; answer: stri
   </svg></div>;
 }
 
-function QuestionScreen({ onBack }: { onBack: () => void }) {
+function QuestionScreen({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -206,6 +221,7 @@ function QuestionScreen({ onBack }: { onBack: () => void }) {
     }
     if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
       setFeedback({ kind: 'correct', text: `答對了。答案是 ${question.answerDisplay}。` });
+      if (questionIndex === total - 1) onComplete();
       return;
     }
     const nextAttempt = Math.min(attempt + 1, 3);
@@ -306,7 +322,7 @@ function DragOrderInput({ interaction, onChange }: { interaction: DragOrderInter
   </div>;
 }
 
-function SecondStageScreen({ onBack }: { onBack: () => void }) {
+function SecondStageScreen({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [symbolAnswer, setSymbolAnswer] = useState('');
   const [orderAnswer, setOrderAnswer] = useState<string[] | null>(null);
@@ -328,6 +344,7 @@ function SecondStageScreen({ onBack }: { onBack: () => void }) {
       : (orderAnswer ?? interaction.numbers).every((value, index) => value === interaction.answer[index]);
     if (correct) {
       setFeedback({ kind: 'correct', text: `答對了。${question.answerDisplay}` });
+      if (questionIndex === total - 1) onComplete();
       return;
     }
     const nextAttempt = Math.min(attempt + 1, 3);
@@ -400,7 +417,7 @@ function NumericKeypad({ allowDecimal, onKey }: { allowDecimal: boolean; onKey: 
   </div>;
 }
 
-function ThirdStageScreen({ onBack }: { onBack: () => void }) {
+function ThirdStageScreen({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -417,6 +434,7 @@ function ThirdStageScreen({ onBack }: { onBack: () => void }) {
     }
     if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
       setFeedback({ kind: 'correct', text: `答對了。答案是 ${question.answerDisplay}。` });
+      if (questionIndex === total - 1) onComplete();
       return;
     }
     const nextAttempt = Math.min(attempt + 1, 3);
@@ -451,7 +469,7 @@ function ThirdStageScreen({ onBack }: { onBack: () => void }) {
   </section>;
 }
 
-function FourthStageScreen({ onBack }: { onBack: () => void }) {
+function FourthStageScreen({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -467,6 +485,7 @@ function FourthStageScreen({ onBack }: { onBack: () => void }) {
     }
     if (normalizeNumericAnswer(answer) === normalizeNumericAnswer(question.answer)) {
       setFeedback({ kind: 'correct', text: `答對了。答案是 ${question.answerDisplay}。` });
+      if (questionIndex === total - 1) onComplete();
       return;
     }
     const nextAttempt = Math.min(attempt + 1, 3);
